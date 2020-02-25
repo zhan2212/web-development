@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script type='text/javascript' src='https://cdn.scaledrone.com/scaledrone.min.js'></script>
+  <!--<script type='text/javascript' src='http://0.0.0.0:8080/scaledrone.js'></script>-->
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha384-HSMxcRTRxnN+Bdg0JdbxYKrThecOKuH5zCYotlSAcp1+c8xmyTe9GYg1l9a69psu" crossorigin="anonymous">
+  <style>
+    body {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 13px;
+      display: flex;
+      flex-direction: column;
+      max-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    .members-count,
+    .members-list,
+    .messages {
+      border: 1px solid #e4e4e4;
+      padding: 15px;
+      margin-bottom: 15px;
+    }
+
+    .messages {
+      flex-shrink: 1;
+      overflow: auto;
+    }
+
+    .message {
+      padding: 1px 0;
+      border-bottom: 1px solid #e4e4e4;
+      margin: 5px;
+    }
+
+    .member {
+      padding-right: 10px;
+      position: relative;
+    }
+
+    .message-form {
+      display: flex;
+      flex-shrink: 0;
+    }
+    .message-form__input {
+      flex-grow: 1;
+      border: 1px solid #dfdfdf;
+      padding: 10px 15px;
+      font-size: 16px;
+    }
+    .message-form__button {
+      margin: 10px;
+    }
+
+    form.example button {
+        float: left;
+        width: 20%;
+        padding: 10px;
+        background: #2196F3;
+        color: white;
+        font-size: 17px;
+        border: 1px solid grey;
+        border-left: none;
+        cursor: pointer;
+        }
+
+form.example button:hover {
+  background: #0b7dda;
+}
+
+input.invite {
+  border-style: solid;
+}
+  </style>
+</head>
+
+
+
+
+<body>
+<div id = "unmatch">
+  <h3> Do not have access! </h3>
+</div>
+
+<div id = "match">
+  <h2>Chat Room: {{Chat_ID}}</h2>
+  <h3>Current Number of People: {{numPeople}}</h3>
+  <h3 id = "username"></h3>
+  <script>
+    document.getElementById("username").innerHTML = "Username: " + localStorage.getItem("username{{Chat_ID}}");
+  </script>
+
+  <form action="/{{Chat_ID}}/invite", method = 'GET'>
+    <input type="submit" value="Invite" class = "invite">
+  </form>
+
+  <div class="messages" id = "messages">
+  </div>
+
+
+  <form class="message-form" onsubmit="return false;">
+    <input class="message-form__input" placeholder="Type a message.." type="text" id = "messageContent"/>
+    <input class="message-form__button" value="Send" type="submit" onclick="sendMessage()"/>
+  </form>
+  <script>
+      function sendMessage(){
+            let div = document.getElementById("messages");
+            let h = document.createElement("div");
+            h.className = "message";
+            let textMessage = document.getElementById("messageContent").value;
+            textMessage = textMessage + " --- " + String(localStorage.getItem("username{{Chat_ID}}"));
+            let t = document.createTextNode(textMessage); 
+            h.appendChild(t); 
+            div.appendChild(h);
+
+            document.getElementById("messageContent").value = "";
+
+            // send message to backend
+            $.ajax({
+              url: '{{Localhost}}/{{Chat_ID}}',
+              beforeSend: function(xhrObj){
+                xhrObj.setRequestHeader("message", textMessage);
+                xhrObj.setRequestHeader("Chat_ID", "{{Chat_ID}}");
+              },
+              type: 'POST'
+              })
+            .done(function(data){
+            });
+        }
+  </script>
+</div>
+
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script> 
+<script>
+  var haveAccess;
+  var sessionToken = String(localStorage.getItem("token{{Chat_ID}}"));
+  $.ajax({
+    url: '{{Localhost}}/data',
+    beforeSend: function(xhrObj){
+      xhrObj.setRequestHeader("token", sessionToken);
+      xhrObj.setRequestHeader("chat_id", "{{Chat_ID}}");
+    },
+    type: 'POST'
+    })
+    .done(function(data){
+      if (String(data) == "match"){
+        document.getElementById("unmatch").style.display = "none";
+        haveAccess = true;
+      } else{
+        document.getElementById("match").style.display = "none";
+        haveAccess = false;
+      }
+  });
+
+  // update message
+  function updateMessage(){
+    setInterval(function(){
+      if (haveAccess == true){
+      fetch('{{Localhost}}/updateMessage', {
+        method: 'GET',
+        headers: {
+          'token': sessionToken,
+          'chat_id': "{{Chat_ID}}",
+        }
+      })
+      .then(function(response){
+        return response.json();
+      })
+      .then(function(data){
+        let div = document.getElementById("messages");
+        // remove previous messages
+        var element = div.lastElementChild;
+        while(element){
+          div.removeChild(element);
+          element = div.lastElementChild;
+        }
+        // update
+        var i;
+        for (i = 0; i < parseInt(data['length']); i ++){
+          let h = document.createElement("div");
+          h.className = "message";
+          let t = document.createTextNode(data[i]); 
+          h.appendChild(t); 
+          div.appendChild(h);
+        }
+      })}
+    }, 1500);
+  }
+
+  document.addEventListener('DOMContentLoaded', function(){
+    updateMessage();
+  })
+  
+
+</script>
+
+</body>
+</html>

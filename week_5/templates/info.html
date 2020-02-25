@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha384-HSMxcRTRxnN+Bdg0JdbxYKrThecOKuH5zCYotlSAcp1+c8xmyTe9GYg1l9a69psu" crossorigin="anonymous">
+    </head>
+
+<body>
+    <div class="container">
+        <div class="starter-template">
+            <!-- Main content should go here-->
+            <div>
+                <h1>Chat Room Inofrmation</h1>
+                <h3>Chat Room ID: {{Chat_ID}}</h3>
+                <h3>Session Token: {{Session_Token}}</h3>
+                <h3>Username: {{Username}}</h3>
+            </div>
+            <a href="{{Localhost}}/{{Chat_ID}}">Enter!</a>
+        </div>
+    </div>
+</body>
+
+<script>
+    localStorage.setItem("token{{Chat_ID}}", "{{Session_Token}}");
+    localStorage.setItem("username{{Chat_ID}}", "{{Username}}");
+</script>
+
+</html>

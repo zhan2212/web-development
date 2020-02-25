@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<!-- collaborate with Qiqi Wang and Wenzhe Liu -->
+<!-- Note: Due to the slow download speed, sometimes you need to click "Search" button again to get the search results. -->
+<html>
+<head>
+<title>Mood Board</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<link rel="stylesheet" type="text/css" href="style.css">
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
+</head>
+
+<body>
+
+<h2>Enter Keyword:</h2>
+<form class="example">
+  <input type="text" placeholder="Search.." id="searchContent">
+  <button type="button" onclick="showWords(); searchPic();"><i class="fa fa-search"></i></button>
+</form>
+
+<div id = "words" calss = "words">
+  <h2 class="words">Related Words:</h2>
+</div>
+
+<div class="row">
+  <div class="column" id = "col0"></div>
+  <div class="column" id = "col1"></div>
+  <div class="column" id = "col2"></div>
+  <div class="column2" id = "newCol0"><h2>Mood Board</h2></div>
+  <div class="column2" id = "newCol1"></div>
+</div>
+
+<script>
+  function showWords(){
+    var keyword = document.getElementById("searchContent").value;
+    $.ajax({
+        url: "https://oydnv6aq1g.execute-api.us-east-1.amazonaws.com/prod/concepts?instance=" + keyword.toString() + "&topK=10",
+        type: "GET",
+    })
+    .done(function(data) {
+      // remove previous related word results
+      var div = document.getElementById("words");
+      var element = div.lastElementChild;
+      while(element){
+        div.removeChild(element);
+        element = div.lastElementChild;
+      }
+
+      var h = document.createElement("H2");
+      var t = document.createTextNode("Related Words:"); 
+      h.appendChild(t); 
+      div.appendChild(h);
+      // add related words
+      let words = Object.keys(data);
+      var k;
+      for (k = 0; k<10;k++) {          
+          var h = document.createElement("H4");
+          var t = document.createTextNode(" "+words[k].toString()+" "); 
+          let wordStr = words[k].toString();
+          h.appendChild(t); 
+          h.onclick = function (){
+            document.getElementById("searchContent").value = wordStr;
+            showWords();
+            searchPic();
+          }
+          div.appendChild(h);
+      }
+    })
+    .fail(function() {
+        alert("error");
+    });
+  }
+  function searchPic() {
+    var keyword = document.getElementById("searchContent").value;
+    var params = {
+        // Request parameters
+        "q": keyword,
+        "count": "15",
+        "offset": "0",
+        "mkt": "en-us",
+        "safeSearch": "Moderate",
+    };
+  
+    $.ajax({
+        url: "https://api.cognitive.microsoft.com/bing/v7.0/images/search?" + $.param(params),
+        beforeSend: function(xhrObj){
+            // Request headers
+            xhrObj.setRequestHeader("Ocp-Apim-Subscription-Key","1d5acb515d7841bc910729ef90ed628f");
+        },
+        type: "GET",
+        // Request body
+        data: "{body}",
+    })
+    .done(function(data) {
+      var newColIndx = 0;
+      // remove previous search results
+      var i;
+      for (i =0; i < 3; i++){
+        var src = document.getElementById("col"+Math.floor(i).toString());
+        var element = src.lastElementChild;
+        while(element){
+          src.removeChild(element);
+          element = src.lastElementChild;
+        }
+      }
+      for (i = 0; i <15; i++) {
+        // extract URL
+        var img = document.createElement("img");
+        let imgSrc = data["value"][i]["contentUrl"];
+        img.src = imgSrc;
+        let ratio = img.height/img.width;
+        // set image size
+        img.height = Math.floor(ratio * 300);
+        img.width = 300; 
+        // record image id and parent div id
+        let imgId = "img" + i.toString();
+        img.id = imgId;
+        let parentID = "col"+Math.floor(i/5).toString();
+        // add onclick function
+        img.onclick = function(){
+          var newDiv = document.getElementById("newCol"+newColIndx.toString());
+          if (newColIndx == 0){
+            newColIndx = 1;
+          } else{
+            newColIndx = 0;
+          }
+          // copy to new section once clicked
+          var newImg = document.createElement("img");
+          newImg.src = imgSrc;
+          newDiv.appendChild(newImg);
+          //remove selected images
+          var image_x = document.getElementById(imgId);
+          var parent = document.getElementById(parentID);
+          parent.removeChild(image_x);
+        };
+        // show saerch result
+        var src = document.getElementById("col"+Math.floor(i/5).toString());
+        if (i == 0){
+          var h = document.createElement("H2");
+          var t = document.createTextNode("Search Results:"); 
+          h.appendChild(t); 
+          src.appendChild(h);
+        }
+        src.appendChild(img);
+      }
+    })
+    .fail(function() {
+        alert("error");
+    });
+  }
+
+</script>
+
+
+</body>
+</html> 

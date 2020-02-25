@@ -1,0 +1,71 @@
+<html>
+    <head>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha384-HSMxcRTRxnN+Bdg0JdbxYKrThecOKuH5zCYotlSAcp1+c8xmyTe9GYg1l9a69psu" crossorigin="anonymous">
+    </head>
+    <body>
+        <!-- Nav Bar-->
+        <div id="navbar" class="collapse navbar-collapse navbar-inverse">
+        <ul class="nav navbar-nav">
+            <li class="active"><a href="/create">Home</a></li>
+        </ul>
+        </div><!--/.nav-collapse -->
+       
+        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script> 
+        <script>
+            function generateLink(){
+                $.ajax({
+                    url: '{{Localhost}}/{{Chat_ID}}/invite',
+                    beforeSend: function(xhrObj){
+                    xhrObj.setRequestHeader("token", String(localStorage.getItem("token{{Chat_ID}}")));
+                    xhrObj.setRequestHeader("username", String(document.getElementById("username").value));
+                    },
+                    type: 'POST'
+                    })
+                    .done(function(data){
+                        if (String(data).includes("create")){
+                            var textContent = "The current chatroom is full, please go back and create a new one!";
+                        }
+                        else {
+                            var textContent = String(data);
+                        }
+
+
+                        let div = document.getElementById("link");
+                        let h = document.createElement("div");
+                        h.className = "message";
+
+                        let a = document.createElement('a');  
+                        let link = document.createTextNode(textContent); 
+                        a.appendChild(link);  
+                        a.title = String(data);  
+                        a.href = String(data); 
+
+                        h.appendChild(a); 
+                        div.appendChild(h);
+
+
+                    
+                    });
+            }
+        </script>
+
+        <div class="container">
+            <div class="starter-template">
+                <!-- Main content should go here-->
+                <h1>Create Username for New User</h1>
+
+                <div>
+                    Username: <input type="text" name="username" id = "username">
+                    <button onclick="generateLink()"> Create </button>
+                </div>
+                <div id = "link">
+                    <h3>Invite Link:</h3>
+                </div>
+            </div>
+        </div>
+
+
+        
+    </body>
+
+</html>
